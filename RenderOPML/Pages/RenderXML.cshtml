@@ -1,0 +1,27 @@
+﻿@page
+@model RenderOPML.Pages.RenderXMLModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RSS Feed</title>
+</head>
+<body>
+   <div class="container">
+    <ul class="list-group mt-4">
+        @foreach (var item in Model.FeedItems)
+        {
+            <li class="list-group-item mb-3 mt-3">
+                <h2>@item.Title</h2>
+                <p>@Html.Raw(item.Description)</p>
+                <p class="published-date"><strong>Published Date: @item.PubDate</strong></p>
+                <a href="@item.Link" class="btn btn-primary no-underline">Read More</a>
+            </li>
+        }
+    </ul>
+</div>
+</body>
+</html>
