@@ -7,22 +7,22 @@ namespace RenderOPML.Pages
     public class RenderXMLModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public List<FeedItem> FeedItems { get; set; } = new List<FeedItem>();
+        public List<FeedItemXml> FeedItems { get; set; } = new List<FeedItemXml>();
 
         public RenderXMLModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IActionResult> OnGetAsync(string xmlUrl) // Updated: Accept xmlUrl as a parameter
+        public async Task<IActionResult> OnGetAsync(string xmlUrl)
         {
-            if (string.IsNullOrEmpty(xmlUrl)) // Check if xmlUrl is provided
+            if (string.IsNullOrEmpty(xmlUrl))
             {
                 return RedirectToPage("/Error");
             }
 
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await FetchXmlContentAsync(httpClient, xmlUrl); // Use xmlUrl parameter
+            var response = await FetchXmlContentAsync(httpClient, xmlUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -42,9 +42,9 @@ namespace RenderOPML.Pages
             return await httpClient.GetAsync(url);
         }
 
-        List<FeedItem> ParseXmlContent(string xmlContent)
+        List<FeedItemXml> ParseXmlContent(string xmlContent)
         {
-            var feedItems = new List<FeedItem>();
+            var feedItems = new List<FeedItemXml>();
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xmlContent);
 
@@ -53,7 +53,7 @@ namespace RenderOPML.Pages
 
             foreach (XmlNode itemNode in itemNodes)
             {
-                FeedItem feedItem = new FeedItem();
+                FeedItemXml feedItem = new FeedItemXml();
 
                 feedItem.Title = itemNode.SelectSingleNode("title")?.InnerText ?? string.Empty;
                 feedItem.Description = itemNode.SelectSingleNode("description")?.InnerText ?? string.Empty;
@@ -67,7 +67,7 @@ namespace RenderOPML.Pages
         }
     }
 
-    public class FeedItem
+    public class FeedItemXml
     {
         public string? Title { get; set; }
         public string Description { get; set; }

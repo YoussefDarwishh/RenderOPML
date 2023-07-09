@@ -11,11 +11,11 @@ namespace RenderOPML.Pages
     public class IndexModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public List<FeedItem> FeedItems { get; set; } = new List<FeedItem>();
+        public List<FeedItemOpml> FeedItems { get; set; } = new List<FeedItemOpml>();
 
         public int PageSize { get; } = 5;
         public int CurrentPage { get; set; } = 1;
-        public int TotalPages => (int)Math.Ceiling((double)FeedItems.Count / PageSize);
+        public int TotalPages { get; set; } = 1;
 
         public IndexModel(IHttpClientFactory httpClientFactory)
         {
@@ -30,15 +30,15 @@ namespace RenderOPML.Pages
             if (response.IsSuccessStatusCode)
             {
                 var xmlContent = await response.Content.ReadAsStringAsync();
-                FeedItems = ParseOpmlContent(xmlContent);
+                var allFeedItems = ParseOpmlContent(xmlContent);
 
-                // Ensure that the current page is within the valid range
+                var startIndex = (currentPage - 1) * PageSize;
+                var endIndex = Math.Min(startIndex + PageSize, allFeedItems.Count);
+                FeedItems = allFeedItems.GetRange(startIndex, endIndex - startIndex);
+
+                TotalPages = (int)Math.Ceiling((double)allFeedItems.Count / PageSize);
+
                 CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
-
-                // Determine the range of items for the current page
-                var startIndex = (CurrentPage - 1) * PageSize;
-                var endIndex = Math.Min(startIndex + PageSize, FeedItems.Count);
-                FeedItems = FeedItems.GetRange(startIndex, endIndex - startIndex);
 
                 return Page();
             }
@@ -48,15 +48,14 @@ namespace RenderOPML.Pages
             }
         }
 
-
         async Task<HttpResponseMessage> FetchXmlContentAsync(HttpClient httpClient, string url)
         {
             return await httpClient.GetAsync(url);
         }
 
-        List<FeedItem> ParseOpmlContent(string opmlContent)
+        List<FeedItemOpml> ParseOpmlContent(string opmlContent)
         {
-            var feedItems = new List<FeedItem>();
+            var feedItems = new List<FeedItemOpml>();
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(opmlContent);
 
@@ -69,7 +68,7 @@ namespace RenderOPML.Pages
 
                 if (!string.IsNullOrEmpty(xmlUrl) && !string.IsNullOrEmpty(text))
                 {
-                    FeedItem feedItem = new FeedItem
+                    FeedItemOpml feedItem = new FeedItemOpml
                     {
                         XmlUrl = xmlUrl,
                         Text = text
@@ -98,7 +97,7 @@ namespace RenderOPML.Pages
             }
         }
 
-        public class FeedItem
+        public class FeedItemOpml
         {
             public string XmlUrl { get; set; }
             public string Text { get; set; }
