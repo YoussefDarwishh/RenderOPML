@@ -13,8 +13,8 @@ public class IndexModel : PageModel
     public List<FeedItemOpml> FeedItems { get; set; } = new List<FeedItemOpml>();
 
     public int PageSize { get; } = 5;
-    public int CurrentPage { get; set; } = 1;
-    public int TotalPages { get; set; } = 1;
+    public int CurrentPage { get; set; } = 0;
+    public int TotalPages { get; set; } = 0;
 
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
