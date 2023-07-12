@@ -6,19 +6,33 @@ namespace RenderOPML.Pages;
 
 public class FavoritesModel : PageModel
 {
-    // New properties for favorite feeds
-    public List<string> FavoriteXmlUrls { get; set; } = new List<string>();
-    public List<string> FavoriteFeedTitles { get; set; } = new List<string>();
-    public List<string> FavoriteHtmlUrls { get; set; } = new List<string>();
+    public List<FeedItemOpml> FavoriteFeedItems { get; set; } = new List<FeedItemOpml>();
 
     public void OnGet()
     {
-        // Retrieve favorite feed information from cookies
-        if (Request.Cookies["XmlUrl"] is not null && Request.Cookies["FeedTitle"] is not null && Request.Cookies["HtmlUrl"] is not null)
+        if (Request.Cookies["StarredFeeds"] is not null)
         {
-            FavoriteXmlUrls = Request.Cookies["XmlUrl"].Split(',').ToList();
-            FavoriteFeedTitles = Request.Cookies["FeedTitle"].Split(',').ToList();
-            FavoriteHtmlUrls = Request.Cookies["HtmlUrl"].Split(',').ToList();
+            var starredFeeds = Request.Cookies["StarredFeeds"];
+            var starredFeedsList = starredFeeds.Split(',').ToList();
+
+            foreach (var feed in starredFeedsList)
+            {
+                // Retrieve favorite feed information from cookies
+                var feedTitle = Request.Cookies[$"{Uri.EscapeDataString(feed)}_FeedTitle"];
+                var htmlUrl = Request.Cookies[$"{Uri.EscapeDataString(feed)}_HtmlUrl"];
+
+                if (!string.IsNullOrEmpty(feedTitle) && !string.IsNullOrEmpty(htmlUrl))
+                {
+                    FeedItemOpml favoriteFeedItem = new FeedItemOpml
+                    {
+                        XmlUrl = feed,
+                        Text = feedTitle,
+                        HtmlUrl = htmlUrl
+                    };
+
+                    FavoriteFeedItems.Add(favoriteFeedItem);
+                }
+            }
         }
     }
 }

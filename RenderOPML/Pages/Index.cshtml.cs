@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml;
 
 namespace RenderOPML.Pages;
+
 public class IndexModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -16,9 +17,7 @@ public class IndexModel : PageModel
     public int CurrentPage { get; set; } = 0;
     public int TotalPages { get; set; } = 0;
 
-    public List<string> FavoriteXmlUrls { get; set; } = new List<string>();
-    public List<string> FavoriteFeedTitles { get; set; } = new List<string>();
-    public List<string> FavoriteHtmlUrls { get; set; } = new List<string>();
+    public List<string> StarredFeeds { get; set; } = new List<string>();
 
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
@@ -43,13 +42,12 @@ public class IndexModel : PageModel
 
             CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
 
-
-            if (Request.Cookies["XmlUrl"] is not null && Request.Cookies["FeedTitle"] is not null && Request.Cookies["HtmlUrl"] is not null)
+            var starredFeeds = Request.Cookies["StarredFeeds"];
+            if (!string.IsNullOrEmpty(starredFeeds))
             {
-                FavoriteXmlUrls = Request.Cookies["XmlUrl"].Split(',').ToList();
-                FavoriteFeedTitles = Request.Cookies["FeedTitle"].Split(',').ToList();
-                FavoriteHtmlUrls = Request.Cookies["HtmlUrl"].Split(',').ToList();
+                StarredFeeds = starredFeeds.Split(',').ToList();
             }
+
             return Page();
         }
         else
@@ -70,13 +68,15 @@ public class IndexModel : PageModel
         {
             string xmlUrl = outlineNode.Attributes["xmlUrl"]?.Value;
             string text = outlineNode.Attributes["text"]?.Value;
+            string htmlUrl = outlineNode.Attributes["htmlUrl"]?.Value;
 
             if (!string.IsNullOrEmpty(xmlUrl) && !string.IsNullOrEmpty(text))
             {
                 FeedItemOpml feedItem = new FeedItemOpml
                 {
                     XmlUrl = xmlUrl,
-                    Text = text
+                    Text = text,
+                    HtmlUrl = htmlUrl
                 };
 
                 feedItems.Add(feedItem);
@@ -86,76 +86,61 @@ public class IndexModel : PageModel
         return feedItems;
     }
 
-    public IActionResult OnGetRenderXml(string xmlUrl)
+    public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        var response = httpClient.GetAsync(xmlUrl).Result;
+        var starredFeeds = Request.Cookies["StarredFeeds"];
+        List<string> starredFeedsList;
 
-        if (response.IsSuccessStatusCode)
+        if (string.IsNullOrEmpty(starredFeeds))
         {
-            var xmlContent = response.Content.ReadAsStringAsync().Result;
-            return Content(xmlContent, "text/xml");
+            starredFeedsList = new List<string>();
         }
         else
         {
-            return Content("Failed to retrieve XML content.");
+            starredFeedsList = starredFeeds.Split(',').ToList();
         }
-    }
-    public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
-    {
-        // Add the new favorite feed to the lists
-        FavoriteXmlUrls.Add(xmlUrl);
-        FavoriteFeedTitles.Add(feedTitle);
-        FavoriteHtmlUrls.Add(htmlUrl);
 
-        // Update the cookies with the updated lists
-        Response.Cookies.Append("XmlUrl", string.Join(",", FavoriteXmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
-        {
-            Secure = true
-        });
-        Response.Cookies.Append("FeedTitle", string.Join(",", FavoriteFeedTitles), new Microsoft.AspNetCore.Http.CookieOptions
-        {
-            Secure = true
-        });
-        Response.Cookies.Append("HtmlUrl", string.Join(",", FavoriteHtmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
-        {
-            Secure = true
-        });
+        starredFeedsList.Add(xmlUrl);
+
+        Response.Cookies.Append("StarredFeeds", string.Join(",", starredFeedsList));
+        Response.Cookies.Append($"{Uri.EscapeDataString(xmlUrl)}_FeedTitle", feedTitle);
+        Response.Cookies.Append($"{Uri.EscapeDataString(xmlUrl)}_HtmlUrl", htmlUrl);
 
         return RedirectToPage();
     }
 
     public IActionResult OnPostDeleteStar(string xmlUrl)
     {
-        // Remove the favorite feed from the lists
-        int index = FavoriteXmlUrls.IndexOf(xmlUrl);
-        if (index != -1)
-        {
-            FavoriteXmlUrls.RemoveAt(index);
-            FavoriteFeedTitles.RemoveAt(index);
-            FavoriteHtmlUrls.RemoveAt(index);
+        var starredFeeds = Request.Cookies["StarredFeeds"];
+        List<string> starredFeedsList;
 
-            // Update the cookies with the updated lists
-            Response.Cookies.Append("XmlUrl", string.Join(",", FavoriteXmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
-            {
-                Secure = true
-            });
-            Response.Cookies.Append("FeedTitle", string.Join(",", FavoriteFeedTitles), new Microsoft.AspNetCore.Http.CookieOptions
-            {
-                Secure = true
-            });
-            Response.Cookies.Append("HtmlUrl", string.Join(",", FavoriteHtmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
-            {
-                Secure = true
-            });
+        if (string.IsNullOrEmpty(starredFeeds))
+        {
+            starredFeedsList = new List<string>();
         }
+        else
+        {
+            starredFeedsList = starredFeeds.Split(',').ToList();
+        }
+
+        starredFeedsList.Remove(xmlUrl);
+
+        Response.Cookies.Append("StarredFeeds", string.Join(",", starredFeedsList));
+        Response.Cookies.Delete($"{Uri.EscapeDataString(xmlUrl)}_FeedTitle");
+        Response.Cookies.Delete($"{Uri.EscapeDataString(xmlUrl)}_HtmlUrl");
+
         return RedirectToPage();
+    }
+
+    public bool IsFeedStarred(string xmlUrl)
+    {
+        return StarredFeeds.Contains(xmlUrl);
     }
 }
 
 public class FeedItemOpml
 {
-        public string XmlUrl { get; set; }
-        public string Text { get; set; }
-        public string HtmlUrl { get; set; }
+public string XmlUrl { get; set; }
+public string Text { get; set; }
+public string HtmlUrl { get; set; }
 }

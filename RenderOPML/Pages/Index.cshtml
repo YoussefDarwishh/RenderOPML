@@ -8,6 +8,12 @@
 <html>
 <head>
     <title>RSS Feed</title>
+    <style>
+        .button-form {
+            display: inline;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -19,16 +25,16 @@
                     <h2>@item.Text</h2>
                     <a href="RenderXML?xmlUrl=@System.Web.HttpUtility.UrlEncode(item.XmlUrl)" class="btn btn-primary">Read More!</a>
                     @{
-                        bool isFavorite = Model.FavoriteXmlUrls.Contains(item.XmlUrl);
+                        bool isFavorite = Model.IsFeedStarred(item.XmlUrl);
                         if (isFavorite)
                         {
-                            <form method="post">
-                                <button type="submit" class="btn btn-warning" asp-page-handler="DeleteStar" asp-route-xmlUrl="@item.XmlUrl" asp-route-feedTitle="@item.Text" asp-route-htmlUrl="@item.HtmlUrl">Unstar</button>
+                            <form class="button-form" method="post">
+                                <button type="submit" class="btn btn-warning" asp-page-handler="DeleteStar" asp-route-xmlUrl="@item.XmlUrl">Unstar</button>
                             </form>
                         }
                         else
                         {
-                            <form method="post">
+                            <form class="button-form" method="post">
                                 <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@item.XmlUrl" asp-route-feedTitle="@item.Text" asp-route-htmlUrl="@item.HtmlUrl">Star</button>
                             </form>
                         }
