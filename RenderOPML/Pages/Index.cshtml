@@ -1,5 +1,5 @@
-﻿@page "{currentPage:int?}"
-@model IndexModel
+﻿@page
+@model RenderOPML.Pages.IndexModel
 @{
     ViewData["Title"] = "Home page";
 }
@@ -18,6 +18,21 @@
                 <li class="list-group-item mb-3 mt-3">
                     <h2>@item.Text</h2>
                     <a href="RenderXML?xmlUrl=@System.Web.HttpUtility.UrlEncode(item.XmlUrl)" class="btn btn-primary">Read More!</a>
+                    @{
+                        bool isFavorite = Model.FavoriteXmlUrls.Contains(item.XmlUrl);
+                        if (isFavorite)
+                        {
+                            <form method="post">
+                                <button type="submit" class="btn btn-warning" asp-page-handler="DeleteStar" asp-route-xmlUrl="@item.XmlUrl" asp-route-feedTitle="@item.Text" asp-route-htmlUrl="@item.HtmlUrl">Unstar</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post">
+                                <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@item.XmlUrl" asp-route-feedTitle="@item.Text" asp-route-htmlUrl="@item.HtmlUrl">Star</button>
+                            </form>
+                        }
+                    }
                 </li>
             }
         </ul>
@@ -32,6 +47,10 @@
                 }
             </ul>
         </nav>
+
+        <div class="mt-4">
+            <a href="Favorites" class="btn btn-primary">View Favorites</a>
+        </div>
     </div>
 </body>
 </html>

@@ -16,6 +16,10 @@ public class IndexModel : PageModel
     public int CurrentPage { get; set; } = 0;
     public int TotalPages { get; set; } = 0;
 
+    public List<string> FavoriteXmlUrls { get; set; } = new List<string>();
+    public List<string> FavoriteFeedTitles { get; set; } = new List<string>();
+    public List<string> FavoriteHtmlUrls { get; set; } = new List<string>();
+
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
@@ -39,6 +43,13 @@ public class IndexModel : PageModel
 
             CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
 
+
+            if (Request.Cookies["XmlUrl"] is not null && Request.Cookies["FeedTitle"] is not null && Request.Cookies["HtmlUrl"] is not null)
+            {
+                FavoriteXmlUrls = Request.Cookies["XmlUrl"].Split(',').ToList();
+                FavoriteFeedTitles = Request.Cookies["FeedTitle"].Split(',').ToList();
+                FavoriteHtmlUrls = Request.Cookies["HtmlUrl"].Split(',').ToList();
+            }
             return Page();
         }
         else
@@ -90,10 +101,61 @@ public class IndexModel : PageModel
             return Content("Failed to retrieve XML content.");
         }
     }
-
-    public class FeedItemOpml
+    public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
     {
+        // Add the new favorite feed to the lists
+        FavoriteXmlUrls.Add(xmlUrl);
+        FavoriteFeedTitles.Add(feedTitle);
+        FavoriteHtmlUrls.Add(htmlUrl);
+
+        // Update the cookies with the updated lists
+        Response.Cookies.Append("XmlUrl", string.Join(",", FavoriteXmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
+        {
+            Secure = true
+        });
+        Response.Cookies.Append("FeedTitle", string.Join(",", FavoriteFeedTitles), new Microsoft.AspNetCore.Http.CookieOptions
+        {
+            Secure = true
+        });
+        Response.Cookies.Append("HtmlUrl", string.Join(",", FavoriteHtmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
+        {
+            Secure = true
+        });
+
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostDeleteStar(string xmlUrl)
+    {
+        // Remove the favorite feed from the lists
+        int index = FavoriteXmlUrls.IndexOf(xmlUrl);
+        if (index != -1)
+        {
+            FavoriteXmlUrls.RemoveAt(index);
+            FavoriteFeedTitles.RemoveAt(index);
+            FavoriteHtmlUrls.RemoveAt(index);
+
+            // Update the cookies with the updated lists
+            Response.Cookies.Append("XmlUrl", string.Join(",", FavoriteXmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Secure = true
+            });
+            Response.Cookies.Append("FeedTitle", string.Join(",", FavoriteFeedTitles), new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Secure = true
+            });
+            Response.Cookies.Append("HtmlUrl", string.Join(",", FavoriteHtmlUrls), new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Secure = true
+            });
+        }
+        return RedirectToPage();
+    }
+}
+
+public class FeedItemOpml
+{
         public string XmlUrl { get; set; }
         public string Text { get; set; }
-    }
+        public string HtmlUrl { get; set; }
 }
