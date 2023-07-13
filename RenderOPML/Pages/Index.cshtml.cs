@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -17,7 +18,7 @@ public class IndexModel : PageModel
     public int CurrentPage { get; set; } = 0;
     public int TotalPages { get; set; } = 0;
 
-    public List<string> StarredFeeds { get; set; } = new List<string>();
+    public List<FeedItemOpml> StarredFeeds { get; set; } = new List<FeedItemOpml>();
 
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
@@ -42,10 +43,10 @@ public class IndexModel : PageModel
 
             CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
 
-            var starredFeeds = Request.Cookies["StarredFeeds"];
-            if (!string.IsNullOrEmpty(starredFeeds))
+            var starredFeedsJson = Request.Cookies["StarredFeeds"];
+            if (!string.IsNullOrEmpty(starredFeedsJson))
             {
-                StarredFeeds = starredFeeds.Split(',').ToList();
+                StarredFeeds = JsonSerializer.Deserialize<List<FeedItemOpml>>(starredFeedsJson);
             }
 
             return Page();
@@ -88,56 +89,59 @@ public class IndexModel : PageModel
 
     public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
     {
-        var starredFeeds = Request.Cookies["StarredFeeds"];
-        List<string> starredFeedsList;
+        var starredFeedsJson = Request.Cookies["StarredFeeds"];
+        List<FeedItemOpml> starredFeeds;
 
-        if (string.IsNullOrEmpty(starredFeeds))
+        if (string.IsNullOrEmpty(starredFeedsJson))
         {
-            starredFeedsList = new List<string>();
+            starredFeeds = new List<FeedItemOpml>();
         }
         else
         {
-            starredFeedsList = starredFeeds.Split(',').ToList();
+            starredFeeds = JsonSerializer.Deserialize<List<FeedItemOpml>>(starredFeedsJson);
         }
 
-        starredFeedsList.Add(xmlUrl);
+        starredFeeds.Add(new FeedItemOpml
+        {
+            XmlUrl = xmlUrl,
+            Text = feedTitle,
+            HtmlUrl = htmlUrl
+        });
 
-        Response.Cookies.Append("StarredFeeds", string.Join(",", starredFeedsList));
-        Response.Cookies.Append($"{Uri.EscapeDataString(xmlUrl)}_FeedTitle", feedTitle);
-        Response.Cookies.Append($"{Uri.EscapeDataString(xmlUrl)}_HtmlUrl", htmlUrl);
+        Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
 
         return RedirectToPage();
     }
 
     public IActionResult OnPostDeleteStar(string xmlUrl)
     {
-        var starredFeeds = Request.Cookies["StarredFeeds"];
-        List<string> starredFeedsList;
+        var starredFeedsJson = Request.Cookies["StarredFeeds"];
+        List<FeedItemOpml> starredFeeds;
 
-        if (string.IsNullOrEmpty(starredFeeds))
+        if (string.IsNullOrEmpty(starredFeedsJson))
         {
-            starredFeedsList = new List<string>();
+            starredFeeds = new List<FeedItemOpml>();
         }
         else
         {
-            starredFeedsList = starredFeeds.Split(',').ToList();
+            starredFeeds = JsonSerializer.Deserialize<List<FeedItemOpml>>(starredFeedsJson);
         }
 
-        starredFeedsList.Remove(xmlUrl);
-
-        Response.Cookies.Append("StarredFeeds", string.Join(",", starredFeedsList));
-        Response.Cookies.Delete($"{Uri.EscapeDataString(xmlUrl)}_FeedTitle");
-        Response.Cookies.Delete($"{Uri.EscapeDataString(xmlUrl)}_HtmlUrl");
+        var feedToRemove = starredFeeds.FirstOrDefault(feed => feed.XmlUrl == xmlUrl);
+        if (feedToRemove != null)
+        {
+            starredFeeds.Remove(feedToRemove);
+            Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
+        }
 
         return RedirectToPage();
     }
 
     public bool IsFeedStarred(string xmlUrl)
     {
-        return StarredFeeds.Contains(xmlUrl);
+        return StarredFeeds.Any(feed => feed.XmlUrl == xmlUrl);
     }
 }
-
 public class FeedItemOpml
 {
 public string XmlUrl { get; set; }
