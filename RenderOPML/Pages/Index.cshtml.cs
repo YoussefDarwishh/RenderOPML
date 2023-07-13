@@ -8,13 +8,13 @@ namespace RenderOPML.Pages;
 public class IndexModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    public List<FeedItemOpml> FeedItems { get; set; } = new List<FeedItemOpml>();
+    public List<FeedItemOpml> FeedItems { get; set; } = new();
 
     public int PageSize { get; } = 5;
     public int CurrentPage { get; set; } = 0;
     public int TotalPages { get; set; } = 0;
 
-    public List<FeedItemOpml> StarredFeeds { get; set; } = new List<FeedItemOpml>();
+    public List<FeedItemOpml> StarredFeeds { get; set; } = new();
 
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
@@ -90,7 +90,7 @@ public class IndexModel : PageModel
 
         if (string.IsNullOrEmpty(starredFeedsJson))
         {
-            starredFeeds = new List<FeedItemOpml>();
+            starredFeeds = new();
         }
         else
         {
@@ -116,7 +116,7 @@ public class IndexModel : PageModel
 
         if (string.IsNullOrEmpty(starredFeedsJson))
         {
-            starredFeeds = new List<FeedItemOpml>();
+            starredFeeds = new();
         }
         else
         {

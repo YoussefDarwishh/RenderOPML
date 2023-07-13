@@ -7,7 +7,7 @@ namespace RenderOPML.Pages;
 
 public class FavoritesModel : PageModel
 {
-    public List<FeedItemOpml> FavoriteFeedItems { get; set; } = new List<FeedItemOpml>();
+    public List<FeedItemOpml> FavoriteFeedItems { get; set; } = new();
 
     public void OnGet()
     {
