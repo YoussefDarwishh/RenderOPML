@@ -28,15 +28,11 @@
                         bool isFavorite = Model.IsFeedStarred(item.XmlUrl);
                         if (isFavorite)
                         {
-                            <form class="button-form" method="post">
-                                <button type="submit" class="btn btn-warning" asp-page-handler="DeleteStar" asp-route-xmlUrl="@item.XmlUrl">Unstar</button>
-                            </form>
+                            <button type="button" class="btn btn-warning" onclick="deleteStar('@item.XmlUrl')">Unstar</button>
                         }
                         else
                         {
-                            <form class="button-form" method="post">
-                                <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@item.XmlUrl" asp-route-feedTitle="@item.Text" asp-route-htmlUrl="@item.HtmlUrl">Star</button>
-                            </form>
+                            <button type="button" class="btn btn-warning" onclick="starFeed('@item.XmlUrl', '@item.HtmlUrl', '@item.Text')">Star</button>
                         }
                     }
                 </li>
@@ -58,5 +54,78 @@
             <a href="Favorites" class="btn btn-primary">View Favorites</a>
         </div>
     </div>
+
+    <script>
+        function starFeed(xmlUrl, htmlUrl, feedTitle) {
+            const data = {
+                xmlUrl: xmlUrl,
+                htmlUrl: htmlUrl,
+                feedTitle: feedTitle
+            };
+
+            console.log('Star Feed Data:', data);
+
+            fetch('@Url.Page("Index", "Star")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    console.log('Star Feed Response:', response);
+                    if (response.ok) {
+                        updateStarButton(xmlUrl, true);
+                    } else {
+                        console.error('Request failed:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Request failed:', error);
+                });
+        }
+
+        function deleteStar(xmlUrl) {
+            const data = {
+                xmlUrl: xmlUrl
+            };
+
+            console.log('Delete Star Data:', data);
+
+            fetch('@Url.Page("Index", "DeleteStar")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    console.log('Delete Star Response:', response);
+                    if (response.ok) {
+                        updateStarButton(xmlUrl, false);
+                    } else {
+                        console.error('Request failed:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Request failed:', error);
+                });
+        }
+
+        function updateStarButton(xmlUrl, isStarred) {
+            const button = document.querySelector(`button[data-xmlUrl="${xmlUrl}"]`);
+
+            if (button) {
+                if (isStarred) {
+                    button.textContent = 'Unstar';
+                } else {
+                    button.textContent = 'Star';
+                }
+            }
+        }
+    </script>
+
 </body>
 </html>

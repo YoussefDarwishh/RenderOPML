@@ -85,6 +85,7 @@ public class IndexModel : PageModel
 
     public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
     {
+        Console.WriteLine("Star method called.");
         var starredFeedsJson = Request.Cookies["StarredFeeds"];
         List<FeedItemOpml> starredFeeds;
 
@@ -106,7 +107,7 @@ public class IndexModel : PageModel
 
         Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
 
-        return RedirectToPage();
+        return new OkResult();
     }
 
     public IActionResult OnPostDeleteStar(string xmlUrl)
@@ -130,7 +131,7 @@ public class IndexModel : PageModel
             Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
         }
 
-        return RedirectToPage();
+        return new OkResult();
     }
 
     public bool IsFeedStarred(string xmlUrl)
@@ -138,9 +139,10 @@ public class IndexModel : PageModel
         return StarredFeeds.Any(feed => feed.XmlUrl == xmlUrl);
     }
 }
+
 public class FeedItemOpml
 {
-public string XmlUrl { get; set; }
-public string Text { get; set; }
-public string HtmlUrl { get; set; }
+    public string XmlUrl { get; set; }
+    public string Text { get; set; }
+    public string HtmlUrl { get; set; }
 }
