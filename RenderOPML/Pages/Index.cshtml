@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Home page";
 }
+@Html.AntiForgeryToken()
 
 <!DOCTYPE html>
 <html>
@@ -28,11 +29,11 @@
                         bool isFavorite = Model.IsFeedStarred(item.XmlUrl);
                         if (isFavorite)
                         {
-                            <button type="button" class="btn btn-warning" onclick="deleteStar('@item.XmlUrl')">Unstar</button>
+                                <button type="button" class="btn btn-warning" onclick="deleteStar('@item.XmlUrl')">Unstar</button>
                         }
                         else
                         {
-                            <button type="button" class="btn btn-warning" onclick="starFeed('@item.XmlUrl', '@item.HtmlUrl', '@item.Text')">Star</button>
+                                <button type="button" class="btn btn-warning" onclick="starFeed('@item.XmlUrl', '@item.HtmlUrl', '@item.Text')">Star</button>
                         }
                     }
                 </li>
@@ -60,12 +61,10 @@
             const data = {
                 xmlUrl: xmlUrl,
                 htmlUrl: htmlUrl,
-                feedTitle: feedTitle
+                text: feedTitle
             };
 
-            console.log('Star Feed Data:', data);
-
-            fetch('@Url.Page("Index", "Star")', {
+            fetch('/post-star', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -74,7 +73,6 @@
                 body: JSON.stringify(data)
             })
                 .then(response => {
-                    console.log('Star Feed Response:', response);
                     if (response.ok) {
                         updateStarButton(xmlUrl, true);
                     } else {
@@ -91,18 +89,15 @@
                 xmlUrl: xmlUrl
             };
 
-            console.log('Delete Star Data:', data);
-
-            fetch('@Url.Page("Index", "DeleteStar")', {
+            fetch('/delete-star', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+                    'RequestVerificationToken': $('input:hidden[name = "__RequestVerificationToken"]').val()
                 },
                 body: JSON.stringify(data)
             })
                 .then(response => {
-                    console.log('Delete Star Response:', response);
                     if (response.ok) {
                         updateStarButton(xmlUrl, false);
                     } else {
@@ -120,11 +115,16 @@
             if (button) {
                 if (isStarred) {
                     button.textContent = 'Unstar';
+                    button.classList.add('btn-warning');
+                    button.classList.remove('btn-primary');
                 } else {
                     button.textContent = 'Star';
+                    button.classList.add('btn-primary');
+                    button.classList.remove('btn-warning');
                 }
             }
         }
+
     </script>
 
 </body>

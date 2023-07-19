@@ -83,57 +83,6 @@ public class IndexModel : PageModel
         return feedItems;
     }
 
-    public IActionResult OnPostStar(string xmlUrl, string feedTitle, string htmlUrl)
-    {
-        Console.WriteLine("Star method called.");
-        var starredFeedsJson = Request.Cookies["StarredFeeds"];
-        List<FeedItemOpml> starredFeeds;
-
-        if (string.IsNullOrEmpty(starredFeedsJson))
-        {
-            starredFeeds = new();
-        }
-        else
-        {
-            starredFeeds = JsonSerializer.Deserialize<List<FeedItemOpml>>(starredFeedsJson);
-        }
-
-        starredFeeds.Add(new FeedItemOpml
-        {
-            XmlUrl = xmlUrl,
-            Text = feedTitle,
-            HtmlUrl = htmlUrl
-        });
-
-        Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
-
-        return new OkResult();
-    }
-
-    public IActionResult OnPostDeleteStar(string xmlUrl)
-    {
-        var starredFeedsJson = Request.Cookies["StarredFeeds"];
-        List<FeedItemOpml> starredFeeds;
-
-        if (string.IsNullOrEmpty(starredFeedsJson))
-        {
-            starredFeeds = new();
-        }
-        else
-        {
-            starredFeeds = JsonSerializer.Deserialize<List<FeedItemOpml>>(starredFeedsJson);
-        }
-
-        var feedToRemove = starredFeeds.FirstOrDefault(feed => feed.XmlUrl == xmlUrl);
-        if (feedToRemove != null)
-        {
-            starredFeeds.Remove(feedToRemove);
-            Response.Cookies.Append("StarredFeeds", JsonSerializer.Serialize(starredFeeds));
-        }
-
-        return new OkResult();
-    }
-
     public bool IsFeedStarred(string xmlUrl)
     {
         return StarredFeeds.Any(feed => feed.XmlUrl == xmlUrl);
