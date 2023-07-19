@@ -37,7 +37,7 @@ app.MapPost("/post-star", (HttpContext context, [FromBody] FeedItemOpml newFeed)
     return Results.Ok();
 });
 
-app.MapPost("/delete-star", (HttpContext context, [FromBody] FeedItemOpml deleteFeed) =>
+app.MapDelete("/delete-star", (HttpContext context, [FromBody] FeedItemOpml deleteFeed) =>
 {
     var starredFeedsJson = context.Request.Cookies["StarredFeeds"];
     List<FeedItemOpml> starredFeeds;
