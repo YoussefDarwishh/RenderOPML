@@ -57,18 +57,38 @@
     </div>
 
     <script>
-        function starFeed(xmlUrl, htmlUrl, feedTitle) {
+        async function getToken() {
+            const response = await fetch("/antiforgery", {
+                method: "GET",
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const xsrfToken = document.cookie
+                    .split("; ")
+                    .find(row => row.startsWith("XSRF-TOKEN="))
+                    .split("=")[1];
+
+                return xsrfToken;
+            }
+            else {
+                return null;
+            }
+        }
+
+      async function starFeed(xmlUrl, htmlUrl, feedTitle) {
             const data = {
                 xmlUrl: xmlUrl,
                 htmlUrl: htmlUrl,
                 text: feedTitle
             };
 
+            var antiforgery = await getToken();
             fetch('/post-star', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+                    "X-XSRF-TOKEN": antiforgery
                 },
                 body: JSON.stringify(data)
             })
@@ -84,16 +104,17 @@
                 });
         }
 
-        function deleteStar(xmlUrl) {
+       async function deleteStar(xmlUrl) {
             const data = {
                 xmlUrl: xmlUrl
             };
 
+            var antiforgery = await getToken();
             fetch('/delete-star', {
                 method: 'Delete',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': $('input:hidden[name = "__RequestVerificationToken"]').val()
+                    "X-XSRF-TOKEN": antiforgery
                 },
                 body: JSON.stringify(data)
             })

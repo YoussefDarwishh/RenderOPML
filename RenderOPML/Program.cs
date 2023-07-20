@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using RenderOPML.Pages;
 using System.Text.Json;
@@ -59,6 +60,12 @@ app.MapDelete("/delete-star", (HttpContext context, [FromBody] FeedItemOpml dele
         return Results.Ok();
     }
     return Results.BadRequest();
+});
+
+app.MapGet("/antiforgery", (IAntiforgery antiforgery, HttpContext context) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
+    context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions { HttpOnly = false });
 });
 
 
